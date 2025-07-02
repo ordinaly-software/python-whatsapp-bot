@@ -58,6 +58,7 @@ target/
 
 # DotEnv configuration
 .env
+venv/*
 
 # Database
 *.db
@@ -89,3 +90,7 @@ target/
 
 # Exlcude the database file
 .db
+
+
+# Flake8 linting configuration file
+.flake8
