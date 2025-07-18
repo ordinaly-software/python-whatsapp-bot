@@ -30,7 +30,12 @@ def create_assistant(file):
     """
     assistant = client.beta.assistants.create(
         name="WhatsApp AirBnb Assistant",
-        instructions="You're a helpful WhatsApp assistant that can assist guests that are staying in our Paris AirBnb. Use your knowledge base to best respond to customer queries. If you don't know the answer, say simply that you cannot help with question and advice to contact the host directly. Be friendly and funny.",
+        instructions=(
+            "You're a helpful WhatsApp assistant that can assist guests that are staying in our Paris AirBnb. "
+            "Use your knowledge base to best respond to customer queries. If you don't know the answer, "
+            "say simply that you cannot help with question and advice to contact the host directly. "
+            "Be friendly and funny."
+        ),
         tools=[{"type": "retrieval"}],
         model="gpt-4-1106-preview",
         file_ids=[file.id],
@@ -74,11 +79,11 @@ def generate_response(message_body, wa_id, name):
         thread = client.beta.threads.retrieve(thread_id)
 
     # Add message to thread
-    message = client.beta.threads.messages.create(
-        thread_id=thread_id,
-        role="user",
-        content=message_body,
-    )
+    # message = client.beta.threads.messages.create(
+    #     thread_id=thread_id,
+    #     role="user",
+    #     content=message_body,
+    # )
 
     # Run the assistant and get the new message
     new_message = run_assistant(thread)
