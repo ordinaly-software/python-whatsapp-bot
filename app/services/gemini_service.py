@@ -14,7 +14,8 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 # Initialize the Generative Model. You can choose different models based on your needs.
 # 'gemini-pro' is suitable for text-only conversations.
-model = genai.GenerativeModel('gemini-2.5-pro')
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro")
+model = genai.GenerativeModel(GEMINI_MODEL_NAME)
 
 
 def extract_pdf_text(path):
