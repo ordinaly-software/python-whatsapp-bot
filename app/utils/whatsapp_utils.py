@@ -74,7 +74,7 @@ def send_message(data):
         logging.info(f"Headers: {headers}")
 
         response = requests.post(
-            url, json=data, headers=headers, timeout=10
+            url, json=data, headers=headers, timeout=current_app.config.get('WHATSAPP_API_TIMEOUT', 10)
         )
 
         response.raise_for_status()
