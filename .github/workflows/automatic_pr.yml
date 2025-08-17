@@ -1,0 +1,93 @@
+name: Daily Develop to Main Pull Request
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # Runs daily at 7:00 AM UTC
+    # - cron: '*/10 * * * *'  # Runs every 10 minutes
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Configure Git and fetch branches
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git remote set-branches --add origin develop main
+          git fetch origin develop main
+          
+      - name: Check for differences
+        id: check_diff
+        run: |
+          git branch -a
+          if git rev-parse --verify origin/develop >/dev/null 2>&1; then
+            if git rev-parse --verify origin/main >/dev/null 2>&1; then
+              DIFF=$(git rev-list --count origin/main..origin/develop || echo "0")
+              echo "DIFF_COUNT=$DIFF" >> $GITHUB_ENV
+              echo "Number of different commits: $DIFF"
+            else
+              echo "Main branch not found"
+              echo "DIFF_COUNT=0" >> $GITHUB_ENV
+            fi
+          else
+            echo "Develop branch not found"
+            echo "DIFF_COUNT=0" >> $GITHUB_ENV
+          fi
+          
+      - name: Create Pull Request
+        if: env.DIFF_COUNT != '0'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headBranch = 'develop';
+            const baseBranch = 'main';
+
+            const { data: existingPRs } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              head: `${owner}:${headBranch}`,
+              base: baseBranch,
+            });
+
+            if (existingPRs.length === 0) {
+              try {
+                const { data: newPR } = await github.rest.pulls.create({
+                  owner,
+                  repo,
+                  title: 'Actualización semanal: develop a main',
+                  head: headBranch,
+                  base: baseBranch,
+                  body: 'Pull request automatizada para sincronizar cambios de develop a main.',
+                });
+
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: newPR.number,
+                  labels: ['automated-pr'],
+                });
+
+                console.log(`✅ PR correctly created: ${newPR.html_url}`);
+              } catch (error) {
+                console.log(`❌ Error creating PR: ${error.message}`);
+              }
+            } else {
+              console.log('🔄 Ya existe una pull request abierta de develop a main.');
+            }
+      
+      - name: No changes found
+        if: env.DIFF_COUNT == '0'
+        run: echo "No changes between develop and main. No PR will be created."

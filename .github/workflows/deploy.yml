@@ -1,0 +1,23 @@
+name: Deploy Django backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          cd /opt/python-whatsapp-bot
+          sudo systemctl restart /etc/systemd/system/whatsapp-bot-stack.service
+          sudo systemctl restart gunicorn
